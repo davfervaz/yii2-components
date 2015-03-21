@@ -1,6 +1,6 @@
 {
     "name": "dlds/yii2-handlers",
-    "description": "Yii2 module handlig dynamic handlers rendering",
+    "description": "Yii2 extension contains various handlers",
     "keywords": ["yii2", "handlers", "extension"],
     "type": "yii2-extension",
     "license": "BSD-3-Clause",
