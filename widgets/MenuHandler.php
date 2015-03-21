@@ -7,14 +7,9 @@ use yii\helpers\ArrayHelper;
 class MenuHandler {
 
     /**
-     * @var array given menu rules
+     * @var boolean default menu id
      */
-    public $rules;
-
-    /**
-     * @var array given menu items
-     */
-    public $items;
+    private static $_default;
 
     /**
      * Process menu rendering
@@ -22,13 +17,35 @@ class MenuHandler {
      */
     public static function process($config)
     {
-        $this->rules = ArrayHelper::getValue($config, 'rules', []);
-        $this->items = ArrayHelper::getValue($config, 'items', []);
+        $route = \Yii::$app->requestedRoute;
 
-        if (!$this->rules)
+        foreach ($config as $id => $rules)
         {
-            return $this->items;
+            $regExp = ArrayHelper::getValue($rules, 0, false);
+
+            if (!is_string($regExp) && !is_bool($regExp))
+            {
+                throw new \yii\base\ErrorException('Invalid menu RegExp. RegExp should be valid reqular expresion or boolean.');
+            }
+
+            $items = ArrayHelper::getValue($rules, 1, []);
+
+            if (!is_array($items))
+            {
+                throw new \yii\base\ErrorException('Invalid menu items. Items should be array.');
+            }
+
+            if (true === $regExp)
+            {
+                self::$_default = $items;
+            }
+            elseif (preg_match($regExp, $route))
+            {
+                return $items;
+            }
         }
+
+        return (self::$_default) ? self::$_default : [];
     }
 
 }
