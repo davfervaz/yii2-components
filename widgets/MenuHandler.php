@@ -1,8 +1,8 @@
 <?php
 
-namespace dlds\menu\components\handlers;
+namespace dlds\handlers\widgets;
 
-use yii\helpers\ArrayHelpers;
+use yii\helpers\ArrayHelper;
 
 class MenuHandler {
 
