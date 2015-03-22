@@ -1,13 +1,13 @@
 {
-    "name": "dlds/yii2-handlers",
-    "description": "Yii2 extension contains various handlers",
-    "keywords": ["yii2", "handlers", "extension"],
+    "name": "dlds/yii2-components",
+    "description": "Yii2 extension contains various components",
+    "keywords": ["yii2", "components", "helpers", "components", "extension"],
     "type": "yii2-extension",
     "license": "BSD-3-Clause",
     "support": {
-        "issues": "https://github.com/dlds/yii2-handlers/issues",
-        "wiki": "https://github.com/dlds/yii2-handlers/wiki",
-        "source": "https://github.com/dlds/yii2-handlers"
+        "issues": "https://github.com/dlds/yii2-components/issues",
+        "wiki": "https://github.com/dlds/yii2-components/wiki",
+        "source": "https://github.com/dlds/yii2-components"
     },
     "authors": [
         {
@@ -20,7 +20,7 @@
     },
     "autoload": {
         "psr-4": {
-            "dlds\\handlers\\": ""
+            "dlds\\components\\": ""
         }
     }
 }

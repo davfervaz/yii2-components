@@ -6,10 +6,10 @@
  * @license http://www.digitaldeals/license/
  */
 
-namespace dlds\handlers;
+namespace dlds\components;
 
 /**
- * This is the main module class for the Handlers module.
+ * This is the main module class for the components module.
  *
  * @author Jiri Svoboda <jiri.svoboda@dlds.cz>
  */

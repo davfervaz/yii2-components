@@ -1,6 +1,6 @@
 <?php
 
-namespace dlds\handlers\widgets;
+namespace dlds\components\handlers\widgets;
 
 use yii\helpers\ArrayHelper;
 
