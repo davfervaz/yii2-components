@@ -20,13 +20,13 @@ class RouteHandler {
     {
         $route = \Yii::$app->requestedRoute;
 
-        foreach ($config as $id => $rules)
+        foreach ($config as $rules)
         {
-            $regExp = ArrayHelper::getValue($rules, 0, false);
+            $regexps = ArrayHelper::getValue($rules, 0, false);
 
-            if (!is_string($regExp) && !is_bool($regExp))
+            if (!is_array($regexps) && !is_bool($regexps))
             {
-                throw new \yii\base\ErrorException('Invalid menu RegExp. RegExp should be valid reqular expresion or boolean.');
+                throw new \yii\base\ErrorException('Invalid config. RegEx should be passed as array or boolean.');
             }
 
             $callback = ArrayHelper::getValue($rules, 1, []);
@@ -36,13 +36,19 @@ class RouteHandler {
                 throw new \yii\base\ErrorException('Invalid callback. Callable function must be provided when run property is set to true.');
             }
 
-            if (true === $regExp)
+            if (true === $regexps)
             {
                 self::$_default = $callback;
             }
-            elseif (preg_match($regExp, $route))
+            else
             {
-                return ($run) ? call_user_func($callback) : $callback;
+                foreach ($regexps as $regex)
+                {
+                    if (preg_match($regex, $route))
+                    {
+                        return ($run) ? call_user_func($callback) : $callback;
+                    }
+                }
             }
         }
 
