@@ -2,12 +2,18 @@
 
 namespace dlds\components\helpers\cache;
 
-class RequestCacheHelper {
+use yii\helpers\ArrayHelper;
 
+class RequestCacheHelper {
     /**
      * QueryCache prefixes
      */
     const PREFIX_QUERY_PARAMS = 'query';
+
+    /**
+     * Defaults
+     */
+    const DEFAULT_QUERY_VALUE = [];
 
     /**
      * Caches request query params for given route
@@ -33,10 +39,51 @@ class RequestCacheHelper {
 
         if ($clear && $value)
         {
-            \Yii::$app->cache->delete($key);
+            self::clear($key);
         }
 
-        return $value ? $value : [];
+        return $value ? $value : self::DEFAULT_QUERY_VALUE;
+    }
+
+    /**
+     * Clears cached query params
+     * @param string $route given route
+     */
+    public static function clearQueryParams($route)
+    {
+        $key = self::getKey($route, self::PREFIX_QUERY_PARAMS);
+
+        self::clear($key);
+    }
+
+    /**
+     * Retrieves query params based on conditions below
+     * - If $clearParam is occured in $params, cached query is cleared and default value is retrieved
+     * - If $formParam is occured in $params than $params are cached and retrieved
+     * - Else cached query is retrieves
+     * @param string $route given route
+     * @param array $params given query params
+     * @param string $formParam query parameter representing form
+     * @param string $clearParam parameter representing clearing
+     * @return array query params
+     */
+    public static function processQuery($route, array $params, $formParam, $clearParam = false)
+    {
+        if ($clearParam && ArrayHelper::getValue($params, $clearParam, false))
+        {
+            self::clearQueryParams($route);
+            
+            return self::DEFAULT_QUERY_VALUE;
+        }
+
+        if (ArrayHelper::getValue($params, $formParam, false))
+        {
+            self::setQueryParams($route, $params);
+
+            return $params;
+        }
+
+        return self::getQueryParams($route);
     }
 
     /**
@@ -55,4 +102,12 @@ class RequestCacheHelper {
         return sprintf('%s_%s', $prefix, $name);
     }
 
+    /**
+     * Cleares cache with given key
+     * @param string $key chace key
+     */
+    protected static function clear($key)
+    {
+        return \Yii::$app->cache->delete($key);
+    }
 }
