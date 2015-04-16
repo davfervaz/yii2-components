@@ -5,7 +5,6 @@ namespace dlds\components\handlers;
 use yii\helpers\ArrayHelper;
 
 class RouteHandler {
-
     /**
      * @var boolean default menu id
      */
@@ -54,5 +53,4 @@ class RouteHandler {
 
         return ($run && self::$_default) ? call_user_func(self::$_default) : self::$_default;
     }
-
 }

@@ -5,19 +5,58 @@ namespace dlds\components\helpers\cache;
 use yii\helpers\ArrayHelper;
 
 class RequestCacheHelper {
+
     /**
      * QueryCache prefixes
      */
     const PREFIX_QUERY_PARAMS = 'query';
+    const PREFIX_REFERRER = 'referrer';
 
     /**
      * Defaults
      */
     const DEFAULT_QUERY_VALUE = [];
+    const DEFAULT_REFERRER_VALUE = null;
+
+    /**
+     * Caches referrer if is provided and not equals current ur
+     * @param string $route given rotel
+     * @param \yii\web\Request $request current request
+     * @param array $request allowed referres to be cached
+     */
+    public static function setReferrer($route, \yii\web\Request $request, array $allowed = [])
+    {
+        if ($request->referrer && $request->referrer != $request->absoluteUrl && (!$allowed || in_array($request->referrer, $allowed)))
+        {
+            return \Yii::$app->cache->set(self::getKey($route, self::PREFIX_REFERRER), $request->referrer);
+        }
+
+        return false;
+    }
+
+    /**
+     * Retrieves chached referrer for given route
+     * @param string $route given route
+     * @param boolean $clear indicates if params should be cleared from cache
+     * @return array cached params
+     */
+    public static function getReferrer($route, $clear = true)
+    {
+        $key = self::getKey($route, self::PREFIX_REFERRER);
+
+        $value = \Yii::$app->cache->get($key);
+
+        if ($clear && $value)
+        {
+            self::clear($key);
+        }
+
+        return $value ? $value : self::DEFAULT_REFERRER_VALUE;
+    }
 
     /**
      * Caches request query params for given route
-     * @param string $route given rote
+     * @param string $route given route
      * @param array $params given params
      */
     public static function setQueryParams($route, array $params)
@@ -72,7 +111,7 @@ class RequestCacheHelper {
         if ($clearParam && ArrayHelper::getValue($params, $clearParam, false))
         {
             self::clearQueryParams($route);
-            
+
             return self::DEFAULT_QUERY_VALUE;
         }
 
@@ -83,7 +122,7 @@ class RequestCacheHelper {
             return $params;
         }
 
-        return self::getQueryParams($route);
+        return ArrayHelper::merge(self::getQueryParams($route), $params);
     }
 
     /**

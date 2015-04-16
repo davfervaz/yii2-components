@@ -31,7 +31,7 @@ class ISOValidator extends Validator {
             $this->addError($model, $attribute, $this->message);
         }
     }
-    
+
     /**
      * Return secured value
      * @param type $value
@@ -41,5 +41,4 @@ class ISOValidator extends Validator {
     {
         return trim($value);
     }
-
 }
