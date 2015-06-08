@@ -11,7 +11,12 @@ class VatHelper {
      */
     public static function addVat($priceWithoutVat, $vat)
     {
-        return $priceWithoutVat * (1 + $vat / 100);
+        if ($vat)
+        {
+            return $priceWithoutVat * (1 + $vat / 100);
+        }
+
+        return $priceWithoutVat;
     }
 
     /**
@@ -21,6 +26,11 @@ class VatHelper {
      */
     public static function subVat($priceWithVat, $vat)
     {
-        return $priceWithVat / (1 + $vat / 100);
+        if ($vat)
+        {
+            return $priceWithVat / (1 + $vat / 100);
+        }
+
+        return $priceWithVat;
     }
 }
