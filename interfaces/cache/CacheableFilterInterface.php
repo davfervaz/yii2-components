@@ -11,8 +11,9 @@ interface CacheableFilterInterface {
 
     /**
      * Retrieves filter identification
+     * @param boolean $uid indicated if uid should be included in identification
      */
-    public function getIdentification();
+    public function getIdentification($uid = false);
 
     /**
      * Parses given query params if everything is valid

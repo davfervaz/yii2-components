@@ -77,7 +77,7 @@ class FilterCacheHelper {
 
         if (!$filterParams)
         {
-            $filterParams = self::loadParams($route, $filter->getIdentification());
+            $filterParams = self::loadParams($route, $filter->getIdentification(true));
         }
 
         $toClear = $filter->getParamsToClear($query);
@@ -87,7 +87,7 @@ class FilterCacheHelper {
             unset($filterParams[$attr]);
         }
 
-        self::saveParams($route, $filter->getIdentification(), $filterParams);
+        self::saveParams($route, $filter->getIdentification(true), $filterParams);
 
         return [$filter->getIdentification() => $filterParams];
     }
