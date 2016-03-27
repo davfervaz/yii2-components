@@ -98,7 +98,7 @@ class AwesomeSpinner extends \yii\base\Widget {
     /**
      * @var string spinner tag name
      */
-    public $tag = 'div';
+    public $options = [];
 
     /**
      * @var string fallback message
@@ -121,20 +121,59 @@ class AwesomeSpinner extends \yii\base\Widget {
      */
     public function run()
     {
-        AwesomeSpinnerAsset::register($this->view);
+        $this->registerAssets();
 
-        $html = Html::beginTag('div', ['class' => $this->getAnimationClass()]);
+        Html::addCssClass($this->options, $this->getAnimationClass());
 
-        for ($i = 1; $i < $this->getAnimationChilds(); $i++)
+        $html = Html::beginTag('div', $this->options);
+
+        for ($i = 1; $i <= $this->getAnimationChilds(); $i++)
         {
-            $html.= Html::tag('div', null);
+            $html .= Html::tag('div', '');
         }
-
-        //$html .= Html::tag($this->tag, $this->message, ['class' => sprintf('css-spinner-%s', $this->type)]);
 
         $html .= Html::endTag('div');
 
         echo $html;
+    }
+
+    /**
+     * Registeres appropriate assets
+     */
+    protected function registerAssets()
+    {
+        switch ($this->type)
+        {
+            case self::TYPE_BALL_ATOM:
+                bundles\BallAtomAsset::register($this->view, $this->type);
+                break;
+            case self::TYPE_BALL_BEAT:
+                bundles\BallBeatAsset::register($this->view, $this->type);
+                break;
+            case self::TYPE_BALL_CIRCUS:
+                bundles\BallCircusAsset::register($this->view, $this->type);
+                break;
+            case self::TYPE_BALL_CLIP_ROTATE:
+                bundles\BallClipRotateAsset::register($this->view, $this->type);
+                break;
+            case self::TYPE_BALL_CLIP_ROTATE_MULTIPLE:
+                bundles\BallClipRotateMultipleAsset::register($this->view, $this->type);
+                break;
+            case self::TYPE_BALL_CLIP_ROTATE_PULSE:
+                bundles\BallClipRotatePulseAsset::register($this->view, $this->type);
+                break;
+            case self::TYPE_BALL_SPIN_CLOCKWISE:
+                bundles\BallSpinClockwiseAsset::register($this->view, $this->type);
+                break;
+            case self::TYPE_LINE_SCALE:
+                bundles\LineScaleAsset::register($this->view, $this->type);
+                break;
+            case self::TYPE_TIMER:
+                bundles\TimerAsset::register($this->view, $this->type);
+                break;
+            default:
+                throw new \yii\base\NotSupportedException('AssetBundle is not supported yet for this type.');
+        }
     }
 
     /**
@@ -171,7 +210,6 @@ class AwesomeSpinner extends \yii\base\Widget {
             self::TYPE_BALL_FUSSION => 4,
             self::TYPE_BALL_GRID_BEAT => 9,
             self::TYPE_BALL_GRID_PULSE => 9,
-            self::TYPE_BALL_8BITS => 1,
             self::TYPE_BALL_NEWTON_CRADLE => 4,
             self::TYPE_BALL_PULSE => 3,
             self::TYPE_BALL_PULSE_RISE => 5,
