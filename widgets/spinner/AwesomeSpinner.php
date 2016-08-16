@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @link http://www.digitaldeals.cz/
  * @copyright Copyright (c) 2016 Digital Deals s.r.o.
@@ -17,7 +18,8 @@ use yii\helpers\ArrayHelper;
  * @see https://github.com/danielcardoso/load-awesome
  * @author
  */
-class AwesomeSpinner extends \yii\base\Widget {
+class AwesomeSpinner extends \yii\base\Widget
+{
 
     /**
      * CSS Prefix
@@ -103,15 +105,14 @@ class AwesomeSpinner extends \yii\base\Widget {
     /**
      * @var string fallback message
      */
-    public $message;
+    public $message = null;
 
     /**
      * @inheritdoc
      */
     public function init()
     {
-        if (!$this->message)
-        {
+        if (null === $this->message) {
             $this->message = \Yii::t('dlds/components/widgets/spinner', 'Loading...');
         }
     }
@@ -127,8 +128,7 @@ class AwesomeSpinner extends \yii\base\Widget {
 
         $html = Html::beginTag('div', $this->options);
 
-        for ($i = 1; $i <= $this->getAnimationChilds(); $i++)
-        {
+        for ($i = 1; $i <= $this->getAnimationChilds(); $i++) {
             $html .= Html::tag('div', '');
         }
 
@@ -142,8 +142,7 @@ class AwesomeSpinner extends \yii\base\Widget {
      */
     protected function registerAssets()
     {
-        switch ($this->type)
-        {
+        switch ($this->type) {
             case self::TYPE_BALL_ATOM:
                 bundles\BallAtomAsset::register($this->view, $this->type);
                 break;
@@ -182,8 +181,7 @@ class AwesomeSpinner extends \yii\base\Widget {
      */
     protected function getAnimationClass()
     {
-        if ($this->doubled)
-        {
+        if ($this->doubled) {
             return sprintf('%s-%s %s-2x', self::CSS_PREFIX, $this->type, self::CSS_PREFIX);
         }
 
@@ -254,4 +252,5 @@ class AwesomeSpinner extends \yii\base\Widget {
 
         return ArrayHelper::getValue($config, $this->type, 1);
     }
+
 }
