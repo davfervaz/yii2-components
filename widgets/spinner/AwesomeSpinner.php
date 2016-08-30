@@ -84,10 +84,6 @@ class AwesomeSpinner extends \yii\base\Widget
     const TYPE_TRIANGLE_SKEW_SPIN = 'triangle-skew-spin';
 
     /**
-     * Animatmion classes
-     */
-    //const
-    /**
      * @var int spiiner type
      */
     public $type = self::TYPE_LINE_SCALE;
@@ -101,21 +97,6 @@ class AwesomeSpinner extends \yii\base\Widget
      * @var string spinner tag name
      */
     public $options = [];
-
-    /**
-     * @var string fallback message
-     */
-    public $message = null;
-
-    /**
-     * @inheritdoc
-     */
-    public function init()
-    {
-        if (null === $this->message) {
-            $this->message = \Yii::t('dlds/components/widgets/spinner', 'Loading...');
-        }
-    }
 
     /**
      * @inheritdoc
