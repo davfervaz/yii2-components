@@ -3,8 +3,9 @@
 namespace dlds\components\behaviors\db;
 
 use Yii;
-use yii\db\ActiveRecord;
 use yii\base\ErrorException;
+use yii\db\ActiveRecord;
+use yii\helpers\ArrayHelper;
 
 /**
  * Class ManyToManyBehavior
@@ -65,19 +66,31 @@ use yii\base\ErrorException;
  *         ->viaTable('{{%object_has_task}}', ['object_id' => 'id']);
  * }
  */
-class ManyToManyBehavior extends \yii\base\Behavior {
+class ManyToManyBehavior extends \yii\base\Behavior
+{
+
+    /**
+     * Default primary key name
+     */
+    const DF_PRIMARY_KEY = 'id';
 
     /**
      * Relations list
      * @var array
      */
-    public $relations = array();
+    public $relations = [];
 
     /**
-     * Relations value
+     * Related records entries keys
      * @var array
      */
-    private $_values = array();
+    private $_keys = [];
+
+    /**
+     * Cached related records
+     * @var array
+     */
+    private $_records = [];
 
     /**
      * Events list
@@ -86,226 +99,287 @@ class ManyToManyBehavior extends \yii\base\Behavior {
     public function events()
     {
         return [
-            ActiveRecord::EVENT_AFTER_INSERT => 'saveRelations',
-            ActiveRecord::EVENT_AFTER_UPDATE => 'saveRelations',
+            ActiveRecord::EVENT_AFTER_INSERT => 'handleManyToMany',
+            ActiveRecord::EVENT_AFTER_UPDATE => 'handleManyToMany',
         ];
     }
 
     /**
-     * Save relations value in data base
+     * Save many to many relations value in data base
      * @param $event
      * @throws ErrorException
      * @throws \yii\db\Exception
      */
-    public function saveRelations($event)
+    public function handleManyToMany($event)
     {
-        /**
-         * @var $model \yii\db\ActiveRecord
-         */
-        $model = $event->sender;
-        if (is_array($modelPk = $model->getPrimaryKey()))
-        {
-            throw new ErrorException("This behavior not supported composite primary key");
-        }
+        $pkOwner = $this->_pkOwner();
+        
+        // go through all m2m configs
+        foreach ($this->relations as $attr => $config) {
 
-        foreach ($this->relations as $attributeName => $params)
-        {
-            if (!$model->isAttributeSafe($attributeName))
-            {
+            // skip when no value is set for current relation
+            $junctions = ArrayHelper::getValue($this->_keys, $attr, false);
+
+            if (false === $junctions) {
                 continue;
             }
 
-            $relationName = $this->getRelationName($attributeName);
-            $relation = $model->getRelation($relationName);
+            $relationName = $this->_relName($config);
+            $relation = $this->owner->getRelation($relationName);
 
-            if (empty($relation->via))
-            {
+            if (empty($relation->via)) {
                 throw new ErrorException("This attribute \"{$relationName}\" is not Many-to-Many relation");
             }
 
-            list($junctionTable) = array_values($relation->via->from);
-            list($relatedColumn) = array_values($relation->link);
-            list($junctionColumn) = array_keys($relation->via->link);
+            $df = $this->_relDefinition($relation);
 
-            $newValue = $this->getNewValue($attributeName);
+            // prepare rows to be inserted
+            $rows = [];
 
-            if (!empty($params['set']))
-            {
-                $relationKeys = $this->callUserFunction($params['set'], $newValue);
-            }
-            else
-            {
-                $relationKeys = $newValue;
+            foreach ($junctions as $pkRelated) {
+                array_push($rows, [$pkOwner, $pkRelated]);
             }
 
-            // Save relations data
-            $connection = $model::getDb();
+            // make operation transactional
+            $db = \Yii::$app->db;
+            $transaction = $db->beginTransaction();
 
-            $transaction = $connection->beginTransaction();
-            try
-            {
-                $connection = Yii::$app->db;
+            try {
 
-                // Remove relations
-                $connection->createCommand()
-                        ->delete($junctionTable, "{$junctionColumn} = :id", [':id' => $modelPk])
-                        ->execute();
+                // deletes current junctions
+                $this->_delJunctions($df[0], $df[2], $pkOwner, $db);
 
-                // Write new relations
-                if (!empty($relationKeys))
-                {
-                    $junctionRows = array();
-                    foreach ($relationKeys as $relatedPk)
-                    {
-                        array_push($junctionRows, [$modelPk, $relatedPk]);
-                    }
-
-                    $connection->createCommand()
-                            ->batchInsert($junctionTable, [$junctionColumn, $relatedColumn], $junctionRows)
-                            ->execute();
-                }
+                // create new junctions
+                $this->_addJunctions($df[0], $df[2], $df[1], $rows, $db);
 
                 $transaction->commit();
-            }
-            catch (\yii\db\Exception $ex)
-            {
+            } catch (\yii\db\Exception $ex) {
                 $transaction->rollback();
             }
         }
     }
 
     /**
-     * Call user function
-     * @param $function
-     * @param $value
-     * @return mixed
-     * @throws ErrorException
+     * @inheritdoc
      */
-    private function callUserFunction($function, $value)
+    public function canGetProperty($name, $checkVars = true)
     {
-        if (!is_array($function) && !$function instanceof \Closure)
-        {
-            throw new ErrorException("This value is not a function");
+        if (!ArrayHelper::keyExists($name, $this->relations)) {
+            return parent::canGetProperty($name, $checkVars);
         }
 
-        return call_user_func($function, $value);
+        return true;
     }
 
     /**
-     * Get relation new value
-     * @param $name
-     * @return null
+     * @inheritdoc
      */
-    private function getNewValue($name)
+    public function canSetProperty($name, $checkVars = true)
     {
-        if (isset($this->_values[$name]))
-        {
-            return $this->_values[$name];
+        if (!ArrayHelper::keyExists($name, $this->relations)) {
+            return parent::canSetProperty($name, $checkVars);
         }
 
-        return array();
+        return true;
     }
 
     /**
-     * Get params relation
-     * @param $attributeName
-     * @return mixed
-     * @throws ErrorException
+     * Retrieves keys for given relational attr name
+     * @param string $attr
+     * @return array
      */
-    private function getRelationParams($attributeName)
+    public function m2mKeys($attr)
     {
-        if (empty($this->relations[$attributeName]))
-        {
-            throw new ErrorException("Item \"{$attributeName}\" must be configured");
+        return ArrayHelper::getValue($this->_keys, $attr, []);
+    }
+
+    /**
+     * Retrieves records for given relational attr name
+     * @param string $attr
+     * @return array
+     */
+    public function m2mRecords($attr)
+    {
+        return ArrayHelper::getValue($this->_records, $attr, []);
+    }
+
+    /**
+     * Retrieves records for given relational attr name
+     * @param string $attr
+     * @return array
+     */
+    public function m2mDbRead($attr)
+    {
+        $relName = $this->_relName($this->_relConfig($attr));
+
+        $this->owner->{$attr} = $this->owner->getRelation($relName);
+    }
+
+    /**
+     * Retrieves records for given relational attr name
+     * @param string $attr
+     * @return array
+     */
+    public function m2mDbRemove($attr)
+    {
+        $relName = $this->_relName($this->_relConfig($attr));
+        $relation = $this->owner->getRelation($relName);
+
+        $pkOwner = $this->_pkOwner();
+        $df = $this->_relDefinition($relation);
+
+        // deletes current junctions
+        $this->_delJunctions($df[0], $df[2], $pkOwner);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function __get($name)
+    {
+        if (!ArrayHelper::keyExists($name, $this->relations)) {
+            return parent::__get($name);
         }
 
-        return $this->relations[$attributeName];
+        $callback = $this->_relConfig($name, 'get');
+
+        if ($callback &&  is_callable($callback)) {
+            return call_user_func($callback, $this->_keys[$name]);
+        }
+
+        return ArrayHelper::getValue($this->_keys, $name, []);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function __set($name, $value)
+    {
+        if (!ArrayHelper::keyExists($name, $this->relations)) {
+            parent::__set($name, $value);
+        }
+
+        $callback = $this->_relConfig($name, 'set');
+
+        if ($callback &&  is_callable($callback)) {
+            $this->_keys[$name] = call_user_func($callback, $value);
+            return;
+        }
+
+        // find and cache entries when ActiveQuery is given
+        if ($value instanceof \yii\db\ActiveQuery) {
+            $pk = call_user_func([$value->modelClass, 'primaryKey']);
+            $pkName = ArrayHelper::getValue($pk, 0, self::DF_PRIMARY_KEY);
+
+            $this->_records[$name] = $value->all();
+            $value = ArrayHelper::map($this->_records[$name], $pkName, $pkName);
+        }
+
+        // fill keys of related records
+        $this->_keys[$name] = $value;
+    }
+
+    /**
+     * Retrieves owner primary key
+     * @return int
+     * @throws ErrorException
+     */
+    private function _pkOwner()
+    {
+        $pkOwner = $this->owner->getPrimaryKey();
+
+        if (is_array($pkOwner)) {
+            throw new ErrorException("This behavior not supported composite primary key");
+        }
+        
+        return $pkOwner;
+    }
+
+    /**
+     * Deletes all junction records
+     * @param string $tblJunction
+     * @param string $colOwner
+     * @param string|int $pkOwner
+     * @param \yii\db\Connection $db
+     */
+    private function _addJunctions($tblJunction, $colOwner, $colRelated, array $rows, \yii\db\Connection $db = null)
+    {
+        if (!$db) {
+            $db = \Yii::$app->db;
+        }
+
+        // create new junctions
+        return $db->createCommand()
+                ->batchInsert($tblJunction, [$colOwner, $colRelated], $rows)
+                ->execute();
+    }
+
+    /**
+     * Deletes all junction records
+     * @param string $tblJunction
+     * @param string $colOwner
+     * @param string|int $pkOwner
+     * @param \yii\db\Connection $db
+     */
+    private function _delJunctions($tblJunction, $colOwner, $pkOwner, \yii\db\Connection $db = null)
+    {
+        if (!$db) {
+            $db = \Yii::$app->db;
+        }
+        // remove current junctions
+        return $db->createCommand()
+                ->delete($tblJunction, "{$colOwner} = :pk", [':pk' => $pkOwner])
+                ->execute();
     }
 
     /**
      * Get source attribute name
-     * @param $attributeName
+     * @param $attr
      * @return null
      */
-    private function getRelationName($attributeName)
+    private function _relName($config)
     {
-        $params = $this->getRelationParams($attributeName);
-
-        if (is_string($params))
-        {
-            return $params;
-        }
-        elseif (is_array($params) && !empty($params[0]))
-        {
-            return $params[0];
+        if (!is_array($config)) {
+            return $config;
         }
 
-        return NULL;
+        return ArrayHelper::getValue($config, 0);
     }
 
     /**
-     * Returns a value indicating whether a property can be read.
-     *
-     * @param string $name the property name
-     * @param boolean $checkVars whether to treat member variables as properties
-     * @return boolean whether the property can be read
-     * @see canSetProperty()
+     * Get relation param
+     * @param $attr
+     * @return mixed
+     * @throws ErrorException
      */
-    public function canGetProperty($name, $checkVars = true)
+    private function _relConfig($attr, $param = null)
     {
-        return array_key_exists($name, $this->relations) ?
-                true : parent::canGetProperty($name, $checkVars);
-    }
-
-    /**
-     * Returns a value indicating whether a property can be set.
-     *
-     * @param string $name the property name
-     * @param boolean $checkVars whether to treat member variables as properties
-     * @param boolean $checkBehaviors whether to treat behaviors' properties as properties of this component
-     * @return boolean whether the property can be written
-     * @see canGetProperty()
-     */
-    public function canSetProperty($name, $checkVars = true, $checkBehaviors = true)
-    {
-        return array_key_exists($name, $this->relations) ?
-                true : parent::canSetProperty($name, $checkVars, $checkBehaviors);
-    }
-
-    /**
-     * Returns the value of an object property.
-     *
-     * @param string $name the property name
-     * @return mixed the property value
-     * @see __get()
-     */
-    public function __get($name)
-    {
-        $relationName = $this->getRelationName($name);
-        $relationParams = $this->getRelationParams($name);
-
-        $value = $this->owner
-                ->getRelation($relationName)
-                ->all();
-
-        if (!empty($relationParams['get']))
-        {
-            return $this->callUserFunction($relationParams['get'], $value);
+        if (!ArrayHelper::keyExists($attr, $this->relations)) {
+            throw new ErrorException("ManyToMany Relation \"{$attr}\" is not configured");
         }
 
-        return $value;
+        if (!$param) {
+            return $this->relations[$attr];
+        }
+
+        return ArrayHelper::getValue($this->relations[$attr], $param);
     }
 
     /**
-     * Sets the value of a component property.
-     *
-     * @param string $name the property name or the event name
-     * @param mixed $value the property value
-     * @see __get()
+     * Retrieves relation definition
+     * ---
+     * Definition is sorted array of following names: ['tblJunction', 'colRelated', 'colOwner']
+     * ---
+     * @param \yii\db\ActiveQuery $relation
+     * @return array
      */
-    public function __set($name, $value)
+    private function _relDefinition($relation)
     {
-        $this->_values[$name] = $value;
+        list($tblJunction) = array_values($relation->via->from);
+        list($colRelated) = array_values($relation->link);
+        list($colOwner) = array_keys($relation->via->link);
+
+        return [$tblJunction, $colRelated, $colOwner];
     }
 
 }
