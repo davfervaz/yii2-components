@@ -243,7 +243,7 @@ class ManyToManyBehavior extends \yii\base\Behavior
 
         $callback = $this->_relConfig($name, 'get');
 
-        if ($callback &&  is_callable($callback)) {
+        if ($callback && is_callable($callback)) {
             return call_user_func($callback, $this->_keys[$name]);
         }
 
