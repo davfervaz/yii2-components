@@ -1,0 +1,110 @@
+/**
+---
+BALL CLIP ROTATE MULTIPLE
+---
+*/
+@keyframes ball-clip-rotate-multiple {
+    0% {
+        -webkit-transform: rotate(0deg);
+        transform: rotate(0deg); 
+    }
+    50% {
+        -webkit-transform: rotate(180deg);
+        transform: rotate(180deg); 
+    }
+    100% {
+        -webkit-transform: rotate(360deg);
+        transform: rotate(360deg); 
+    } 
+}
+
+.cl-ball-clip-rotate-multiple {
+    position: relative;
+    height: 36px;
+    width: 36px;
+}
+.cl-ball-clip-rotate-multiple > div {
+    position: absolute;
+    border-width: 2px;
+    border-style: solid;
+    border-color: inherit;
+    border-radius: 100%;
+    -webkit-animation: ball-clip-rotate-multiple 1s 0s ease-in-out infinite;
+    animation: ball-clip-rotate-multiple 1s 0s ease-in-out infinite; 
+    -webkit-animation-fill-mode: both;
+    animation-fill-mode: both;
+}
+.cl-ball-clip-rotate-multiple > div:first-child {
+    left: 0px;
+    top: 0px;
+    height: 36px;
+    width: 36px;
+    border-bottom-color: transparent;
+    border-top-color: transparent;
+}
+.cl-ball-clip-rotate-multiple > div:last-child {
+    display: inline-block;
+    top: 10px;
+    left: 10px;
+    width: 16px;
+    height: 16px;
+    border-right-color: transparent;
+    border-left-color: transparent;
+    -webkit-animation-duration: 0.5s;
+    animation-duration: 0.5s;
+    -webkit-animation-direction: reverse;
+    animation-direction: reverse; 
+}
+/**
+---
+SIZE SM
+---
+*/
+.cl-ball-clip-rotate-multiple.cl-sm {
+    width: 16px;
+    height: 16px;
+}
+.cl-ball-clip-rotate-multiple.cl-sm > div:first-child {
+    height: 16px;
+    width: 16px;
+}
+.cl-ball-clip-rotate-multiple.cl-sm > div:last-child {
+    top: 5px;
+    left: 5px;
+    width: 6px;
+    height: 6px;
+}
+/**
+---
+SIZE LG
+---
+*/
+.cl-ball-clip-rotate-multiple.cl-lg {
+    width: 56px;
+    height: 56px;
+}
+.cl-ball-clip-rotate-multiple.cl-lg > div:first-child {
+    height: 56px;
+    width: 56px;
+}
+.cl-ball-clip-rotate-multiple.cl-lg > div:last-child {
+    top: 15px;
+    left: 15px;
+    width: 26px;
+    height: 26px;
+
+}
+/**
+---
+WEIGHT BOLD
+---
+*/
+.cl-ball-clip-rotate-multiple.cl-bold > div {
+    border-width: 6px;
+}
+.cl-ball-clip-rotate-multiple.cl-sm.cl-bold > div {
+    border-width: 3px;
+}
+.cl-ball-clip-rotate-multiple.cl-lg.cl-bold > div {
+    border-width: 9px;
+}
