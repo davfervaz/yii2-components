@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @link http://www.digitaldeals.cz/
  * @copyright Copyright (c) 2016 Digital Deals s.r.o.
@@ -13,21 +14,16 @@ use yii\web\AssetBundle;
  * @author Jiri Svoboda <jiri.svobodao@dlds.cz>
  * @package loader
  */
-class BallClipRotateMultipleAsset extends AssetBundle {
+class BallClipRotateMultipleAsset extends AssetBundle
+{
 
     public $sourcePath = '@dlds/components/widgets/loader/assets';
 
-    public function init()
-    {
-        if (YII_DEBUG)
-        {
-            $this->css[] = 'ball-clip-rotate-multiple.css';
-        }
-        else
-        {
-            $this->css[] = 'ball-clip-rotate-multiple.min.css';
-        }
+    /**
+     * @var array
+     */
+    public $css = [
+        'ball-clip-rotate-multiple.css',
+    ];
 
-        return parent::init();
-    }
 }
