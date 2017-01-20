@@ -117,7 +117,7 @@ class CssLoader extends \yii\base\Widget
     protected function elmClass()
     {
         if ($this->size) {
-            return sprintf('cl-%s cl-%s', $this->type, $this->size);
+            return sprintf('cl-indicator cl-%s cl-%s', $this->type, $this->size);
         }
 
         return $this->type;
