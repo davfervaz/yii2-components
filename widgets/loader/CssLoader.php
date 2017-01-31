@@ -57,7 +57,7 @@ class CssLoader extends \yii\base\Widget
     /**
      * Available sizes
      */
-    const S_XS = 'sm';
+    const S_SM = 'sm';
     const S_MD = 'md';
     const S_LG = 'lg';
 
