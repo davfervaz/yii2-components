@@ -113,7 +113,7 @@ class ManyToManyBehavior extends \yii\base\Behavior
     public function handleManyToMany($event)
     {
         $pkOwner = $this->_pkOwner();
-        
+
         // go through all m2m configs
         foreach ($this->relations as $attr => $config) {
 
@@ -241,13 +241,21 @@ class ManyToManyBehavior extends \yii\base\Behavior
             return parent::__get($name);
         }
 
+        $keys = ArrayHelper::getValue($this->_keys, $name, []);
+
+        if (empty($keys)) {
+            $this->m2mDbRead($name);
+        }
+
+        $keys = ArrayHelper::getValue($this->_keys, $name, []);
+
         $callback = $this->_relConfig($name, 'get');
 
         if ($callback && is_callable($callback)) {
-            return call_user_func($callback, $this->_keys[$name]);
+            return call_user_func($callback, $keys);
         }
 
-        return ArrayHelper::getValue($this->_keys, $name, []);
+        return $keys;
     }
 
     /**
@@ -291,7 +299,7 @@ class ManyToManyBehavior extends \yii\base\Behavior
         if (is_array($pkOwner)) {
             throw new ErrorException("This behavior not supported composite primary key");
         }
-        
+
         return $pkOwner;
     }
 
@@ -310,8 +318,8 @@ class ManyToManyBehavior extends \yii\base\Behavior
 
         // create new junctions
         return $db->createCommand()
-                ->batchInsert($tblJunction, [$colOwner, $colRelated], $rows)
-                ->execute();
+            ->batchInsert($tblJunction, [$colOwner, $colRelated], $rows)
+            ->execute();
     }
 
     /**
@@ -328,8 +336,8 @@ class ManyToManyBehavior extends \yii\base\Behavior
         }
         // remove current junctions
         return $db->createCommand()
-                ->delete($tblJunction, "{$colOwner} = :pk", [':pk' => $pkOwner])
-                ->execute();
+            ->delete($tblJunction, "{$colOwner} = :pk", [':pk' => $pkOwner])
+            ->execute();
     }
 
     /**
