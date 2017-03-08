@@ -4,15 +4,8 @@ namespace dlds\components\helpers\money;
 
 use yii\helpers\ArrayHelper;
 
-class VatHelper {
-
-    /**
-     * @var array hold vat rations to sub given vat from value
-     */
-    protected static $ratios = [
-        '21' => 0.1736,
-    ];
-
+class VatHelper
+{
     /**
      * Adds vat to given price and retrieves price with vat
      * @param float $priceWithoutVat given price without vat
@@ -20,8 +13,7 @@ class VatHelper {
      */
     public static function addVat($priceWithoutVat, $vat)
     {
-        if ($vat)
-        {
+        if ($vat) {
             return $priceWithoutVat * (1 + ($vat / 100));
         }
 
@@ -35,16 +27,11 @@ class VatHelper {
      */
     public static function subVat($priceWithVat, $vat)
     {
-        if ($vat)
-        {
-            $ratio = ArrayHelper::getValue(self::$ratios, (string) $vat, false);
+        if ($vat) {
 
-            if ($ratio)
-            {
-                return $priceWithVat - ($priceWithVat * $ratio);
-            }
+            $ratio = round(($vat / (100 + $vat)), 4);
 
-            return $priceWithVat / (1 + $vat / 100);
+            return $priceWithVat - ($priceWithVat * $ratio);
         }
 
         return $priceWithVat;
