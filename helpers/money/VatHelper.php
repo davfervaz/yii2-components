@@ -29,7 +29,7 @@ class VatHelper
     {
         if ($vat) {
 
-            $ratio = round(($vat / (100 + $vat)), 4);
+            $ratio = round(($vat / (100 + $vat)), 6);
 
             return $priceWithVat - ($priceWithVat * $ratio);
         }
