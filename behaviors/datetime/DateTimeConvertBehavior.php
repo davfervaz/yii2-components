@@ -39,7 +39,8 @@ class DateTimeConvertBehavior extends Behavior
     public function events()
     {
         return [
-            \yii\db\ActiveRecord::EVENT_BEFORE_VALIDATE => 'handleValidate',
+            \yii\db\ActiveRecord::EVENT_BEFORE_VALIDATE => 'handleBeforeValidate',
+            \yii\db\ActiveRecord::EVENT_AFTER_VALIDATE => 'handleAfterValidate',
             \yii\db\ActiveRecord::EVENT_AFTER_INSERT => 'handleRead',
             \yii\db\ActiveRecord::EVENT_AFTER_UPDATE => 'handleRead',
             \yii\db\ActiveRecord::EVENT_AFTER_REFRESH => 'handleRead',
@@ -50,7 +51,7 @@ class DateTimeConvertBehavior extends Behavior
     /**
      * Handle save convert
      */
-    public function handleValidate()
+    public function handleBeforeValidate()
     {
         foreach ($this->attrs() as $attr) {
 
@@ -59,6 +60,16 @@ class DateTimeConvertBehavior extends Behavior
             }
 
             $this->owner->$attr = static::convert($this->owner->$attr, $this->formatToDisplay($attr), $this->formatToSave($attr), $this->timezone);
+        }
+    }
+
+    /**
+     * Handle save convert
+     */
+    public function handleAfterValidate()
+    {
+        if ($this->owner->hasErrors()) {
+            $this->handleRead();
         }
     }
 
