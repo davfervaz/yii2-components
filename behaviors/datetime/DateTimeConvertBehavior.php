@@ -53,6 +53,11 @@ class DateTimeConvertBehavior extends Behavior
     public function handleValidate()
     {
         foreach ($this->attrs() as $attr) {
+
+            if (!$this->owner->$attr) {
+                continue;
+            }
+
             $this->owner->$attr = static::convert($this->owner->$attr, $this->formatToDisplay($attr), $this->formatToSave($attr), $this->timezone);
         }
     }
@@ -63,6 +68,11 @@ class DateTimeConvertBehavior extends Behavior
     public function handleRead()
     {
         foreach ($this->attrs() as $attr) {
+
+            if (!$this->owner->$attr) {
+                continue;
+            }
+
             $this->owner->$attr = static::convert($this->owner->$attr, $this->formatToSave($attr), $this->formatToDisplay($attr), $this->timezone);
         }
     }
